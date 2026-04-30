@@ -1,4 +1,4 @@
-# Ulmus STR Amplicon Pipeline
+# Microsat Amplicon Pipeline
 
 A reference-anchored pipeline for calculating microsatellite allele lengths and
 dosage from paired-end Illumina amplicon data in a mixed-ploidy system (diploid + tetraploid *Ulmus americana*).
@@ -7,6 +7,9 @@ dosage from paired-end Illumina amplicon data in a mixed-ploidy system (diploid 
 
 ## Quick note:
 Hi, Marne here. I don't condone the use of AI for many things; however, I tried a lot of different microsatellite analysis programs and none of them worked with my dataset. I explained everything I needed to Claude the AI, as well as the programs I tried and why they failed. It created all of this, then I worked to troubleshoot it. Update from a few hours later: It ran to completion! Visual inspection makes the output look accurate. It only took a few hours to run 545 samples and 34 (filtered to 18) loci.
+
+## Update: 
+It looks like the amplicon panel is the issue here. Of the 34 microsats we included, 18 were amplified. Of those 18, 5 are polymorphic for the diploids.
 
 ## Why this pipeline?
 
