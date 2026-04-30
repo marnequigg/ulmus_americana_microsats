@@ -49,8 +49,8 @@ pip install pysam pandas numpy scipy
 
 | File | Description |
 |---|---|
-| `Ulmus_amplicon_targets.csv` | Microsatellite metadata CSV (provided) |
-| `ulmus_reference.fa` | Reference genome FASTA |
+| `microsats_all_info.csv` | Microsatellite metadata CSV (provided) |
+| `amplicon_reference.fa` | Reference FASTA of gene region sequences |
 | `samples.txt` | One sample name per line |
 | `trimmed_reads/` | Directory with `{sample}_R1.fastq.gz`, `{sample}_R2.fastq.gz` |
 | `ploidy.tsv` | (Optional) Two columns: `sample<TAB>ploidy` (2 or 4) |
@@ -63,6 +63,17 @@ sample_003	4
 ```
 Samples not listed use `--default-ploidy` (default: 2).
 
+**To generate the amplicon_reference.fa from the microsats_all_info.csv**
+```bash
+python3 -c "
+import pandas as pd
+df = pd.read_csv('microsats_all_info.csv').dropna(subset=['gene'])
+with open('amplicon_reference.fa', 'w') as fh:
+    for _, row in df.iterrows():
+        fh.write(f'>{row[\"asssay_seq_name\"]}\n{row[\"assay_sequence\"]}\n')
+print(f'Wrote {len(df)} amplicon sequences to amplicon_reference.fa')
+"
+```
 ---
 
 ## Usage
