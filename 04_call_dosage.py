@@ -88,28 +88,22 @@ def load_ploidy_map(path, default_ploidy):
 
 # ---------------------------------------------------------------------------
 def pick_peaks(lengths, counts, motif_len, noise_frac, stutter_window):
-    """
-    Identify allele peaks from a length:count Series.
-    Returns list of (length, count, fraction) for valid peaks.
-    """
     total = counts.sum()
     if total == 0:
         return []
 
     fracs = counts / total
-    # Build dense array from min to max length
     l_min, l_max = lengths.min(), lengths.max()
     dense_len = np.arange(l_min, l_max + 1, 1)
     dense_cnt = np.zeros(len(dense_len), dtype=float)
     for l, c in zip(lengths, counts):
         dense_cnt[l - l_min] = c
 
-    # Find peaks with minimum prominence
     prominence_threshold = noise_frac * total
     peak_idx, properties = find_peaks(
         dense_cnt,
         prominence=prominence_threshold,
-        distance=motif_len  # peaks must be at least 1 motif unit apart
+        distance=motif_len
     )
 
     peaks = []
@@ -123,16 +117,24 @@ def pick_peaks(lengths, counts, motif_len, noise_frac, stutter_window):
 
         peaks.append((int(length_val), int(cnt_val), round(float(frac_val), 4)))
 
-    # Also include any length above noise floor that wasn't caught by peak finder
-    # (handles cases where only 1 allele is present — flat distribution)
+    # Edge peak detection
+    edge_indices = [0, len(dense_cnt) - 1]
+    for ei in edge_indices:
+        if dense_cnt[ei] >= prominence_threshold:
+            edge_len  = int(dense_len[ei])
+            edge_cnt  = int(dense_cnt[ei])
+            edge_frac = dense_cnt[ei] / total
+            if not any(p[0] == edge_len for p in peaks):
+                peaks.append((edge_len, edge_cnt, round(float(edge_frac), 4)))
+
+    # Fallback if no peaks found
     if not peaks:
         for l, f in zip(lengths, fracs):
             if f >= noise_frac:
                 peaks.append((int(l), int(counts[lengths == l][0]), round(float(f), 4)))
 
-    # Remove stutter: if a peak is exactly stutter_window * motif_len below
-    # a larger peak and has < 20% the reads, discard it
-    peaks = sorted(peaks, key=lambda x: -x[1])  # sort by count desc
+    # Remove stutter
+    peaks = sorted(peaks, key=lambda x: -x[1])
     kept = []
     for pk in peaks:
         is_stutter = False
@@ -144,7 +146,7 @@ def pick_peaks(lengths, counts, motif_len, noise_frac, stutter_window):
         if not is_stutter:
             kept.append(pk)
 
-    return sorted(kept, key=lambda x: x[0])  # sort by length
+    return sorted(kept, key=lambda x: x[0])
 
 
 # ---------------------------------------------------------------------------
@@ -157,22 +159,25 @@ def assign_dosage(peaks, ploidy, tol):
     if not peaks:
         return []
 
+    # For diploids, dosage is deterministic — bypass fraction math entirely
+    if ploidy == 2 and len(peaks) == 1:
+        return [(peaks[0][0], 2)]
+    if ploidy == 2 and len(peaks) == 2:
+        return [(peaks[0][0], 1), (peaks[1][0], 1)]
+
     total_frac = sum(p[2] for p in peaks)
     dosages = []
 
     for length, cnt, frac in peaks:
-        # Expected fraction = dosage / ploidy
         norm_frac = frac / total_frac if total_frac > 0 else frac
         raw_dose  = norm_frac * ploidy
         dose      = int(round(raw_dose))
         dose      = max(1, min(dose, ploidy))
         dosages.append((length, dose))
 
-    # Ensure total dosage == ploidy; adjust largest-residual allele if needed
     total_dose = sum(d for _, d in dosages)
     if total_dose != ploidy and dosages:
         diff = ploidy - total_dose
-        # Add/subtract from the allele whose raw dosage is furthest from integer
         fracs  = [p[2] / total_frac if total_frac > 0 else p[2] for p in peaks]
         raw_ds = [f * ploidy for f in fracs]
         residuals = [abs(r - round(r)) for r in raw_ds]
@@ -180,7 +185,6 @@ def assign_dosage(peaks, ploidy, tol):
         dosages[adj_idx] = (dosages[adj_idx][0], max(1, dosages[adj_idx][1] + diff))
 
     return dosages
-
 
 # ---------------------------------------------------------------------------
 def format_genotype(dosages, ploidy):
@@ -352,4 +356,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
