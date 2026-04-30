@@ -11,6 +11,8 @@ Hi, Marne here. I don't condone the use of AI for many things; however, I tried 
 ## Update: 
 It looks like the amplicon panel is the issue here. Of the 34 microsats we included, 18 were amplified. Of those 18, 5 are polymorphic for the diploids.
 
+---
+
 ## Why this pipeline?
 
 | Tool tried | Why it failed here |
