@@ -128,7 +128,7 @@ def pick_peaks(lengths, counts, motif_len, noise_frac, stutter_window):
     if not peaks:
         for l, f in zip(lengths, fracs):
             if f >= noise_frac:
-                peaks.append((int(l), int(counts[lengths == l].iloc[0]), round(float(f), 4)))
+                peaks.append((int(l), int(counts[lengths == l][0]), round(float(f), 4)))
 
     # Remove stutter: if a peak is exactly stutter_window * motif_len below
     # a larger peak and has < 20% the reads, discard it
@@ -352,3 +352,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
