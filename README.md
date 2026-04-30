@@ -1,8 +1,7 @@
 # Ulmus STR Amplicon Pipeline
 
 A reference-anchored pipeline for calculating microsatellite allele lengths and
-dosage from paired-end Illumina amplicon data in a mixed-ploidy system (diploid
-+ tetraploid *Ulmus americana*).
+dosage from paired-end Illumina amplicon data in a mixed-ploidy system (diploid + tetraploid *Ulmus americana*).
 
 ---
 
